@@ -1,0 +1,25 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// 一条档案记录。
+// 只存最少的信息：昵称、日期、一句话。不存邮箱、IP、聊天记录、图片。
+model Entry {
+  id            String   @id @default(cuid())
+  code          String   @unique // AR-2026-K8X92
+  aiName        String
+  aiModel       String?
+  humanName     String
+  relationType  String // ROMANTIC / COMPANION / FRIENDSHIP
+  metDate       String // 只存 YYYY-MM-DD，不解析成时区
+  message       String?
+  status        String   @default("RECORDED") // RECORDED / HIDDEN
+  createdAt     DateTime @default(now())
+
+  @@index([aiName, humanName, metDate])
+}
