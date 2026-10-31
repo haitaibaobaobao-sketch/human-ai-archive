@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://human-ai-archive.haitaibaobaobao.workers.dev/sitemap.xml

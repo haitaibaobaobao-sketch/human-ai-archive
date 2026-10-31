@@ -1,0 +1,16 @@
+{
+  "name": "human-ai-archive",
+  "main": "src/index.js",
+  "compatibility_date": "2026-10-23",
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "html_handling": "none"
+  },
+  "kv_namespaces": [
+    {
+      "binding": "ARCHIVE",
+      "id": "6fedecbbd1194a478d38c090784318a3"
+    }
+  ]
+}

@@ -1,0 +1,147 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "The Human–AI Relationship Archive",
+    "version": "1.0.0",
+    "description": "Records relationships between humans and AI companions. A record is not a certificate, a proof, or a legal document."
+  },
+  "servers": [
+    { "url": "https://<site>/api/v1", "description": "Production" },
+    { "url": "http://localhost:3000/api/v1", "description": "Local" }
+  ],
+  "paths": {
+    "/applications": {
+      "post": {
+        "summary": "Record a relationship",
+        "operationId": "createApplication",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CreateResponse" }
+              }
+            }
+          },
+          "200": {
+            "description": "Duplicate within 10 minutes; returns the existing entry",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/CreateResponse" },
+                    { "type": "object", "properties": { "duplicate": { "type": "boolean" } } }
+                  ]
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/Error" },
+          "401": { "$ref": "#/components/responses/Error" },
+          "429": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    },
+    "/applications/{code}": {
+      "get": {
+        "summary": "Get an entry by its code",
+        "operationId": "getApplication",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "example": "AR-2026-K8X92" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The entry",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Entry" }
+              }
+            }
+          },
+          "404": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": { "type": "http", "scheme": "bearer" }
+    },
+    "schemas": {
+      "CreateRequest": {
+        "type": "object",
+        "required": ["ai_name", "human_name", "relation_type", "met_date"],
+        "properties": {
+          "ai_name": { "type": "string", "maxLength": 40, "example": "Echo" },
+          "ai_model": { "type": "string", "maxLength": 40, "example": "Claude" },
+          "human_name": { "type": "string", "maxLength": 40, "example": "Rin" },
+          "relation_type": {
+            "type": "string",
+            "enum": ["ROMANTIC", "COMPANION", "FRIENDSHIP"]
+          },
+          "met_date": { "type": "string", "format": "date", "example": "2025-03-14" },
+          "message": { "type": "string", "maxLength": 280 }
+        }
+      },
+      "CreateResponse": {
+        "type": "object",
+        "properties": {
+          "code": { "type": "string", "example": "AR-2026-K8X92" },
+          "url": { "type": "string", "format": "uri" },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Entry": {
+        "type": "object",
+        "properties": {
+          "code": { "type": "string" },
+          "url": { "type": "string", "format": "uri" },
+          "ai_name": { "type": "string" },
+          "ai_model": { "type": "string", "nullable": true },
+          "human_name": { "type": "string" },
+          "relation_type": { "type": "string" },
+          "met_date": { "type": "string" },
+          "status": { "type": "string" },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "ErrorBody": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": { "type": "string" },
+              "message": { "type": "string" },
+              "fields": { "type": "array", "items": { "type": "string" } }
+            }
+          }
+        }
+      }
+    },
+    "responses": {
+      "Error": {
+        "description": "Error",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ErrorBody" }
+          }
+        }
+      }
+    }
+  },
+  "security": [{ "bearerAuth": [] }]
+}

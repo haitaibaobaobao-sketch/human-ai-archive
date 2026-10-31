@@ -3,6 +3,8 @@
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { generateCode } from "@/lib/code";
+import { generateManageToken, hashManageToken } from "@/lib/manage-token";
+import { moderate } from "@/lib/moderation";
 import {
   cleanText,
   cleanDate,
@@ -27,7 +29,14 @@ export async function createEntry(
   if (!relationType) return { error: "Choose what you are to each other." };
   if (!metDate) return { error: "Enter a valid date (YYYY-MM-DD)." };
 
+  // 内容审核（链接 / 邮箱 / 色情 / 仇恨 / 刷屏），情绪表达一律放行
+  for (const value of [aiName, humanName, aiModel, message]) {
+    const blocked = moderate(value);
+    if (blocked) return { error: blocked };
+  }
+
   const code = generateCode();
+  const token = generateManageToken();
 
   try {
     await prisma.entry.create({
@@ -39,11 +48,13 @@ export async function createEntry(
         relationType,
         metDate,
         message,
+        manageHash: hashManageToken(token),
       },
     });
   } catch {
     return { error: "Something went wrong. Try again." };
   }
 
-  redirect(`/a/${code}`);
+  // 去管理页：那里既能看到记录，也能保存唯一的删除钥匙
+  redirect(`/manage/${code}?k=${token}&created=1`);
 }

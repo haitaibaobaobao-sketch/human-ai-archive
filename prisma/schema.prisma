@@ -19,6 +19,8 @@ model Entry {
   metDate       String // 只存 YYYY-MM-DD，不解析成时区
   message       String?
   status        String   @default("RECORDED") // RECORDED / HIDDEN
+  // 管理钥匙的 sha256。只存哈希：泄露数据库也拿不到能删除的钥匙。
+  manageHash    String?
   createdAt     DateTime @default(now())
 
   @@index([aiName, humanName, metDate])

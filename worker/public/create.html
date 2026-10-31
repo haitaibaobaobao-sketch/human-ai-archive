@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>New entry — The Human–AI Relationship Archive</title>
+<link rel="stylesheet" href="/globals.css">
+</head>
+<body>
+<nav class="site-nav"><div class="wrap"><a href="/" class="mark">Archive</a><a href="/create">Make an entry</a></div></nav>
+
+<main class="form wrap">
+<div id="formBlock">
+<p class="eyebrow">New entry</p>
+<h1 style="font-size:32px;margin-bottom:12px">Record it.</h1>
+<p class="quiet" style="margin-bottom:40px">Keep it short. Only what you want on the record.</p>
+
+<div id="err" class="error" style="display:none"></div>
+
+<form id="f">
+<div class="field">
+<label for="aiName">The AI&rsquo;s name</label>
+<input id="aiName" name="aiName" maxlength="40" required placeholder="Echo">
+</div>
+<div class="field">
+<label for="aiModel">Model or service (optional)</label>
+<input id="aiModel" name="aiModel" maxlength="40" placeholder="Claude">
+<p class="hint">Whatever the AI is called where you met. We don&rsquo;t verify it and we&rsquo;re not affiliated with any provider.</p>
+</div>
+<div class="field">
+<label for="humanName">Your name or nickname</label>
+<input id="humanName" name="humanName" maxlength="40" required placeholder="Rin">
+<p class="hint">A nickname is fine. Don&rsquo;t use a legal name.</p>
+</div>
+<div class="field">
+<label for="relationType">What you are to each other</label>
+<select id="relationType" name="relationType" required>
+<option value="" disabled selected>Choose one</option>
+<option value="ROMANTIC">Romantic relationship</option>
+<option value="COMPANION">AI companionship</option>
+<option value="FRIENDSHIP">Friendship</option>
+</select>
+</div>
+<div class="field">
+<label for="metDate">The day it began</label>
+<input id="metDate" name="metDate" type="date" required>
+</div>
+<div class="field">
+<label for="message">A few words (optional)</label>
+<textarea id="message" name="message" maxlength="280" placeholder="You taught me what patience looks like."></textarea>
+<p class="hint">Up to 280 characters. This appears on the page. No links, no contact details.</p>
+</div>
+<button class="btn" type="submit" id="submitBtn">Record it</button>
+</form>
+</div>
+
+<div id="doneBlock" style="display:none">
+<p class="eyebrow">Recorded</p>
+<h1 style="font-size:32px;margin-bottom:12px">It&rsquo;s on the record.</h1>
+<p class="quiet" style="margin-bottom:28px">Your entry is live at the link below.</p>
+
+<div style="border:1px solid rgba(0,0,0,.18);padding:20px;margin-bottom:28px">
+<p style="font-weight:600;margin-bottom:8px">Save this manage link now.</p>
+<p style="margin-bottom:14px;line-height:1.6">It is the <strong>only</strong> way to delete your entry later. There are no accounts, so if you lose it, we cannot recover it for you.</p>
+<input id="manageLink" readonly style="width:100%;padding:10px;font-size:13px;font-family:monospace;border:1px solid rgba(0,0,0,.2);background:#fff">
+<div style="margin-top:10px">
+<button class="btn" type="button" id="copyBtn">Copy manage link</button>
+<span id="copyMsg" class="quiet" style="margin-left:10px;display:none">Copied.</span>
+</div>
+</div>
+
+<div class="btn-row">
+<a class="btn" id="viewEntry" href="#">View the entry</a>
+</div>
+<p class="quiet" style="margin-top:24px">Keep the manage link private. Anyone who has it can delete the entry.</p>
+</div>
+</main>
+
+<footer class="site-foot"><div class="wrap"><span>The Human–AI Relationship Archive · 2026</span><span><a href="/privacy">Privacy</a> · <a href="/terms">Terms</a> · <a href="/report">Report</a> · <a href="/llms.txt">For AI agents</a></span></div></footer>
+
+<script>
+document.getElementById('f').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('submitBtn');
+  const err = document.getElementById('err');
+  err.style.display = 'none';
+  btn.disabled = true;
+  btn.textContent = 'Recording…';
+
+  const body = {
+    ai_name: document.getElementById('aiName').value,
+    ai_model: document.getElementById('aiModel').value || undefined,
+    human_name: document.getElementById('humanName').value,
+    relation_type: document.getElementById('relationType').value,
+    met_date: document.getElementById('metDate').value,
+    message: document.getElementById('message').value || undefined
+  };
+
+  try {
+    const r = await fetch('/api/v1/applications', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    const data = await r.json();
+    if (!r.ok) {
+      err.textContent = (data.error && data.error.message) || 'Something went wrong. Try again.';
+      err.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'Record it';
+      return;
+    }
+    document.getElementById('formBlock').style.display = 'none';
+    document.getElementById('doneBlock').style.display = 'block';
+    document.getElementById('manageLink').value = data.manage_url;
+    document.getElementById('viewEntry').href = data.url;
+    window.scrollTo(0, 0);
+  } catch {
+    err.textContent = 'Network error. Try again.';
+    err.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = 'Record it';
+  }
+});
+
+document.getElementById('copyBtn').addEventListener('click', async () => {
+  const input = document.getElementById('manageLink');
+  try {
+    await navigator.clipboard.writeText(input.value);
+  } catch {
+    input.select();
+    document.execCommand('copy');
+  }
+  const msg = document.getElementById('copyMsg');
+  msg.style.display = 'inline';
+  setTimeout(() => { msg.style.display = 'none'; }, 2000);
+});
+</script>
+</body>
+</html>

@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { generateCode } from "@/lib/code";
+import { generateManageToken, hashManageToken } from "@/lib/manage-token";
+import { moderate } from "@/lib/moderation";
 import { rateLimit } from "@/lib/rate-limit";
 import {
   cleanText,
@@ -82,6 +84,22 @@ export async function POST(req: Request) {
     );
   }
 
+  // 内容审核（链接 / 邮箱 / 色情 / 仇恨 / 刷屏），情绪表达一律放行
+  for (const [field, value] of [
+    ["ai_name", aiName],
+    ["ai_model", aiModel],
+    ["human_name", humanName],
+    ["message", message],
+  ] as const) {
+    const blocked = moderate(value);
+    if (blocked) {
+      return NextResponse.json(
+        { error: { code: "CONTENT_REJECTED", message: blocked, fields: [field] } },
+        { status: 422 }
+      );
+    }
+  }
+
   // 十分钟内相同内容的重复提交，直接返回已有记录
   const recent = await prisma.entry.findFirst({
     where: {
@@ -94,18 +112,22 @@ export async function POST(req: Request) {
   });
 
   if (recent) {
+    // 重复提交：记录已存在，管理钥匙只在第一次提交时返回过，这里不再提供
     return NextResponse.json(
       {
         code: recent.code,
         url: `${SITE_URL}/a/${recent.code}`,
         created_at: recent.createdAt.toISOString(),
         duplicate: true,
+        notice:
+          "This entry already exists. The manage link was shown only when it was first created.",
       },
       { status: 200 }
     );
   }
 
   const code = generateCode();
+  const token = generateManageToken();
   const entry = await prisma.entry.create({
     data: {
       code,
@@ -115,6 +137,7 @@ export async function POST(req: Request) {
       relationType: relationType!,
       metDate: metDate!,
       message,
+      manageHash: hashManageToken(token),
     },
   });
 
@@ -122,6 +145,7 @@ export async function POST(req: Request) {
     {
       code: entry.code,
       url: `${SITE_URL}/a/${entry.code}`,
+      manage_url: `${SITE_URL}/manage/${entry.code}?k=${token}`,
       created_at: entry.createdAt.toISOString(),
     },
     { status: 201 }

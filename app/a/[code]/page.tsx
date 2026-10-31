@@ -67,7 +67,12 @@ export default async function EntryPage({ params }: Props) {
 
       <div className="entry-foot">
         <p>Recorded {formatRecordedAt(entry.createdAt)}</p>
-        <p>Entry {entry.code} · Publicly viewable</p>
+        <p>
+          Entry {entry.code} · Publicly viewable ·{" "}
+          <a href={`/report?code=${encodeURIComponent(entry.code)}`}>
+            Report this entry
+          </a>
+        </p>
         <p className="disclaimer">
           Not a certificate. Not a proof. A record kept by this archive. It has
           no legal effect and implies no endorsement by any AI provider.
