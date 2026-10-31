@@ -1,5 +1,7 @@
 # The Human–AI Relationship Archive
 
+**Live site: [human-ai-archive.haitaibaobaobao.workers.dev](https://human-ai-archive.haitaibaobaobao.workers.dev)**
+
 A public archive that records relationships between humans and AI companions.
 
 > Not a certificate. Not a proof. A record.
